@@ -20,10 +20,10 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
  ChangeOwner{address:String},
+ WithdrawToken{},
+ BuyToken{amount:Uint128},
  SetTokenAddress{address:String},
  SendTokenContract{},
- WithdrawToken{},
- BuyToken{amount:Uint128}
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -32,6 +32,7 @@ pub enum QueryMsg {
     /// Returns a human-readable representation of the arbiter.
     GetStateInfo {},
     GetUserInfo{address:String},
-    GetAllUsers{}
+    GetAllUsers{},
+    CheckWithdraw{address:String}
 }
 

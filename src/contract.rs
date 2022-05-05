@@ -216,8 +216,9 @@ fn execute_change_owner(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetStateInfo {} => to_binary(&query_state_info(deps)?),
+        QueryMsg::CheckWithdraw {address} => to_binary(&query_check_user(deps,_env,address)?),
         QueryMsg::GetUserInfo { address } => to_binary(&query_user_info(deps,address)?),
-        QueryMsg::GetAllUsers{} => to_binary(&query_get_users(deps)?)
+        QueryMsg::GetAllUsers{} => to_binary(&query_get_users(deps)?),
     }   
 }
 
@@ -234,6 +235,17 @@ pub fn query_user_info(deps:Deps,address:String) -> StdResult<UserInfo>{
 pub fn query_get_users(deps: Deps) -> StdResult<Vec<String>> {
     let res = USERS.load(deps.storage)?;
     Ok(res)
+}
+
+pub fn query_check_user(deps: Deps,env:Env,address: String) -> StdResult<bool> {
+    let user_info =  USERINFO.load(deps.storage,&address)?;
+    let state = CONFIG.load(deps.storage)?;
+    if env.block.time.seconds()  > state.vesting_step_period + user_info.last_received_time{
+        Ok(true)
+    }
+    else{
+        Ok(false)
+    }
 }
 
 
@@ -439,6 +451,47 @@ mod tests {
 
         let users = query_get_users(deps.as_ref()).unwrap();
         assert_eq!(users,vec!["buyer1","buyer2"]);
+    }
+
+
+    #[test]
+
+    fn withdraw_token() {
+        let mut deps = mock_dependencies(&[]);
+        let env = mock_env();
+        let instantiate_msg = InstantiateMsg {
+            presale_start:env.block.time.seconds()-240,
+            presale_end:env.block.time.seconds()-10,
+            total_supply:Uint128::new(1000),
+            vesting_period:500,
+            vesting_step_period:125,
+            token_price:Uint128::new(1),
+            denom:"uusd".to_string()
+        };
+        let info = mock_info("creator", &[]);
+        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        let state = query_state_info(deps.as_ref()).unwrap();
+        assert_eq!(state.owner,"creator".to_string());
+
+        let info = mock_info("creator", &[]);
+        let msg = ExecuteMsg::SetTokenAddress  { address:"token_address1".to_string()};
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let state = query_state_info(deps.as_ref()).unwrap();
+        assert_eq!(state.token_address,"token_address1".to_string());
+
+        let info = mock_info("buyer1",&[Coin{
+            denom:"uusd".to_string(),
+            amount:Uint128::new(100)
+        }]);
+
+        let msg = ExecuteMsg::BuyToken { amount: Uint128::new(100) };
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let check = query_check_user(deps.as_ref(),mock_env(),"buyer1".to_string()).unwrap();
+         assert_eq!(check,true);
+       
     }
 }
     
