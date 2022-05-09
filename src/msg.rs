@@ -1,8 +1,8 @@
 
-use cw20::Cw20ReceiveMsg;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use cosmwasm_std::{Decimal, Uint128};
+use cosmwasm_std::{ Uint128};
 
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

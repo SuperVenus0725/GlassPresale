@@ -3,23 +3,6 @@
 version = 3
 
 [[package]]
-name = "Hope_MarketPlace"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-storage-plus 0.8.1",
- "cw2",
- "cw20",
- "protobuf",
- "schemars",
- "serde",
- "terra-cosmwasm",
- "thiserror",
-]
-
-[[package]]
 name = "base64"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -334,6 +317,23 @@ dependencies = [
  "cfg-if",
  "libc",
  "wasi 0.10.1+wasi-snapshot-preview1",
+]
+
+[[package]]
+name = "glass_presale"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus 0.8.1",
+ "cw2",
+ "cw20",
+ "protobuf",
+ "schemars",
+ "serde",
+ "terra-cosmwasm",
+ "thiserror",
 ]
 
 [[package]]

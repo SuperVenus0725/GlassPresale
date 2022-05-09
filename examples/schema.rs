@@ -2,8 +2,8 @@ use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use std::env::current_dir;
 use std::fs::create_dir_all;
 
-use Hope_MarketPlace::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use Hope_MarketPlace::state::State;
+use glass_presale::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use glass_presale::state::State;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

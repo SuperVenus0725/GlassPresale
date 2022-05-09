@@ -1,10 +1,10 @@
 [package]
-name = "Hope_MarketPlace"
+name = "glass_presale"
 version = "0.1.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
-description = "NFT marketplace projects based on Juno chain"
-repository = "https://github.com/CosmWasm/cosmwasm-examples"
+description = "Presale page for glass finance"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

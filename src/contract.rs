@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     entry_point, to_binary, Coin, Deps, DepsMut, Env, MessageInfo, Response,Binary,
-    StdResult, Uint128,CosmosMsg,WasmMsg,BankMsg,Order
+    StdResult, Uint128,CosmosMsg,WasmMsg,BankMsg
 };
 
 use cw2::set_contract_version;
