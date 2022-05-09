@@ -9,11 +9,14 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("Can not send")]
+    AlreadySent {},
+
     #[error("Wrong Portion Error")]
     WrongPortionError {},
   
     #[error("Not enough funds")]
-    NotEnoughFunds {},
+    NotExactFunds {},
     
     #[error("Insufficient remaining token")]
     InsufficientRemainingToken {},

@@ -22,7 +22,8 @@ pub struct State {
     pub token_price:Uint128,
     pub token_sold_amount:Uint128,
     pub denom:String,
-    pub admin_wallet:String
+    pub admin_wallet:String,
+    pub can_send:bool
 }
 
 

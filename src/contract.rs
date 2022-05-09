@@ -37,7 +37,8 @@ pub fn instantiate(
         token_price:msg.token_price,
         token_sold_amount:Uint128::new(0),
         denom:msg.denom,
-        admin_wallet:msg.admin_wallet
+        admin_wallet:msg.admin_wallet,
+        can_send:true
     };
     CONFIG.save(deps.storage,&state)?;
     Ok(Response::default())
@@ -66,11 +67,21 @@ fn execute_send_token_contract(
     env:Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    let state = CONFIG.load(deps.storage)?;
+    let  state = CONFIG.load(deps.storage)?;
+
+    if !state.can_send {
+        return Err(ContractError::AlreadySent {})
+    }
     
     if info.sender.to_string() != state.owner{
         return Err(ContractError::Unauthorized { })
     }   
+
+    CONFIG.update(deps.storage, 
+        |mut state| ->StdResult<_>{
+            state.can_send = false;
+            Ok(state)
+        })?;
 
     Ok(Response::new()
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -109,8 +120,8 @@ fn execute_buy_token(
         .map(|c| Uint128::from(c.amount))
         .unwrap_or_else(Uint128::zero);
     
-    if deposit_amount<state.token_price*amount{
-        return Err(ContractError::NotEnoughFunds {})
+    if deposit_amount != state.token_price*amount/Uint128::new(1000000){
+        return Err(ContractError::NotExactFunds {})
     }
 
     let user_info = USERINFO.may_load(deps.storage,&info.sender.to_string())?;
@@ -392,7 +403,8 @@ mod tests {
             token_address:"token_address".to_string(),
             token_sold_amount:Uint128::new(0),
             denom:"uusd".to_string(),
-            admin_wallet:"admin".to_string()
+            admin_wallet:"admin".to_string(),
+            can_send:true
         });
 
         let info = mock_info("creator", &[]);
@@ -414,7 +426,7 @@ mod tests {
             vesting_step_period:120,
             token_price:Uint128::new(1),
             denom:"uusd".to_string(),
-             admin_wallet:"admin".to_string()
+            admin_wallet:"admin".to_string()
         };
         let info = mock_info("creator", &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
@@ -432,6 +444,7 @@ mod tests {
         let info = mock_info("creator", &[]);
         let msg = ExecuteMsg::SendTokenContract {};
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
         assert_eq!(res.messages.len(),1);
     }
 
@@ -443,10 +456,10 @@ mod tests {
         let instantiate_msg = InstantiateMsg {
             presale_start:env.block.time.seconds(),
             presale_end:env.block.time.seconds()+240,
-            total_supply:Uint128::new(1000),
+            total_supply:Uint128::new(10000000),
             vesting_period:500,
             vesting_step_period:125,
-            token_price:Uint128::new(1),
+            token_price:Uint128::new(10000),
             denom:"uusd".to_string(),
              admin_wallet:"admin".to_string()
         };
@@ -465,46 +478,46 @@ mod tests {
 
         let info = mock_info("buyer1",&[Coin{
             denom:"uusd".to_string(),
-            amount:Uint128::new(100)
+            amount:Uint128::new(10000)
         }]);
 
-        let msg = ExecuteMsg::BuyToken { amount: Uint128::new(100) };
+        let msg = ExecuteMsg::BuyToken { amount: Uint128::new(1000000) };
         execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let user_info = query_user_info(deps.as_ref(), "buyer1".to_string() ).unwrap();
         assert_eq!(user_info,UserInfo{
             address:"buyer1".to_string(),
-            total_token:Uint128::new(100),
+            total_token:Uint128::new(1000000),
             received_token:Uint128::new(0),
             last_received_time:env.block.time.seconds()+115
         });
 
         let info = mock_info("buyer1",&[Coin{
             denom:"uusd".to_string(),
-            amount:Uint128::new(300)
+            amount:Uint128::new(30000)
         }]);
-        let msg = ExecuteMsg::BuyToken { amount: Uint128::new(300) };
+        let msg = ExecuteMsg::BuyToken { amount: Uint128::new(3000000) };
         execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let user_info = query_user_info(deps.as_ref(), "buyer1".to_string() ).unwrap();
         assert_eq!(user_info,UserInfo{
             address:"buyer1".to_string(),
-            total_token:Uint128::new(400),
+            total_token:Uint128::new(4000000),
             received_token:Uint128::new(0),
             last_received_time:env.block.time.seconds()+115
         });
 
         let info = mock_info("buyer2",&[Coin{
             denom:"uusd".to_string(),
-            amount:Uint128::new(500)
+            amount:Uint128::new(50000)
         }]);
-        let msg = ExecuteMsg::BuyToken { amount: Uint128::new(500) };
+        let msg = ExecuteMsg::BuyToken { amount: Uint128::new(5000000) };
         let res =  execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         
         let user_info = query_user_info(deps.as_ref(), "buyer1".to_string() ).unwrap();
         assert_eq!(user_info,UserInfo{
             address:"buyer1".to_string(),
-            total_token:Uint128::new(400),
+            total_token:Uint128::new(4000000),
             received_token:Uint128::new(0),
             last_received_time:env.block.time.seconds()+115
         });
@@ -512,13 +525,13 @@ mod tests {
         let user_info = query_user_info(deps.as_ref(), "buyer2".to_string() ).unwrap();
         assert_eq!(user_info,UserInfo{
             address:"buyer2".to_string(),
-            total_token:Uint128::new(500),
+            total_token:Uint128::new(5000000),
             received_token:Uint128::new(0),
             last_received_time:env.block.time.seconds()+115
         });
 
         let state = query_state_info(deps.as_ref()).unwrap();
-        assert_eq!(state.token_sold_amount,Uint128::new(900));
+        assert_eq!(state.token_sold_amount,Uint128::new(9000000));
 
         assert_eq!(res.messages.len(),1);
         assert_eq!(res.messages[0].msg,
@@ -527,7 +540,7 @@ mod tests {
                 to_address: "admin".to_string(), 
                 amount: vec![Coin{
                     denom:"uusd".to_string(),
-                    amount:Uint128::new(500)
+                    amount:Uint128::new(50000)
                 } ]
             }));
 
