@@ -20,4 +20,17 @@ pub enum ContractError {
 
     #[error("Presale is not started")]
     PresaleNotStarted {},
+
+     #[error("Presale is not finished")]
+    PresaleNotFinished {},
+
+     #[error("Not remaining token at the moment")]
+    NotRemainingToken {},
+
+    #[error("Not deposited")]
+    NotDeposited {},
+
+    #[error("Wrong setting time")]
+    WrongSetTime {},
+    
 }

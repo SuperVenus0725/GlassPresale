@@ -13,7 +13,8 @@ pub struct InstantiateMsg {
     pub vesting_period:u64,
     pub vesting_step_period:u64,
     pub token_price:Uint128,
-    pub denom:String
+    pub denom:String,
+    pub admin_wallet:String
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -21,6 +22,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
  ChangeOwner{address:String},
  WithdrawToken{},
+ WithdrawAdminToken{},
  BuyToken{amount:Uint128},
  SetTokenAddress{address:String},
  SendTokenContract{},
